@@ -1,6 +1,7 @@
 const express = require("express");
 const inquirer = require("inquirer");
 const mysql = require("mysql");
+const ctable = require("console.table")
 
 const fs = require('fs');
 const { start } = require("repl");
@@ -66,9 +67,51 @@ const connection = mysql.createConnection({
      })
  }
 
+function displayDepts() {
+    let query = "SELECT * FROM department";
+    connection.query(query, (err,res) => {
+        if (err) throw err;
+        console.table(res);
+        getAction();
+    });
+}
+function displayRoles() {
+    let query = "SELECT * FROM role";
+    connection.query(query, (err,res) => {
+        if (err) throw err;
+        console.table(res);
+        getAction();
+    });
+}
+function displayEmployees() {
+    let query = "SELECT * FROM employee";
+    connection.query(query, (err,res) => {
+        if (err) throw err;
+        console.table(res);
+        getAction();
+    });
+}
+function displayAll(){
+    let query = "SELECT * FROM department";
+    connection.query(query, (err,res) => {
+        if (err) throw err;
+        console.table(res);
+        let query = "SELECT * FROM role";
+        connection.query(query, (err,res) => {
+            if (err) throw err;
+            console.table(res);
+            let query = "SELECT * FROM employee";
+            connection.query(query, (err,res) => {
+                if (err) throw err;
+                 console.table(res);
+                 getAction();
+              });
+        });
+    });
+}
 
   connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
-    connection.end();
+    getAction();
   });

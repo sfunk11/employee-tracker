@@ -197,3 +197,33 @@ function addRole(){
         });
     })
 }
+
+function addEmployee(){
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "firstName",
+            message: "Please enter the new employee's first name."
+        },
+        {
+            type: "input",
+            name: "lastName",
+            message: "Please enter the new employee's last name."
+        },
+        {
+            type: 'input',
+            name: "roleID",
+            message: "Please enter the role ID code for this new employee."
+        },
+    ]).then(answer => {
+        let firstName = answer.firstName.trim();
+        let lastName = answer.lastName.trim();
+        let roleID =parseInt(answer.roleID);
+        let query = `INSERT into employee (first_name,last_name,role_id) values ('${firstName}','${lastName}',${roleID})`;
+        connection.query(query, (err,res) => {
+            if (err) throw err;
+            console.log("That employee has been added!");
+            displayEmployees();  
+        });
+    })
+}

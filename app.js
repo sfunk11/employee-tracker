@@ -22,19 +22,27 @@ const connection = mysql.createConnection({
     database: "company_db"
   });
 
+  connection.connect(function(err) {
+    if (err) throw err;
+    console.log("connected as id " + connection.threadId);
+    getAction();
+  });
+
   function getAction(){
     inquirer.prompt([
         {
             type: "list",
             name: "action",
             message: "What would you like to do?",
-            choices: ["View Information", "Add New Information", "Exit"]
+            choices: ["View Information", "Add New Information", "Update Existing Information","Exit"]
         }
     ]).then(data => {
         if(data.action === "View Information"){
             viewData();
         }else if (data.action ==="Add New Information"){
             addData();
+        }else if (data.action ==="Update Existing Information"){
+            changeData();  
         }else if (data.action ==="Exit"){
            connection.end(); 
        
@@ -61,7 +69,9 @@ const connection = mysql.createConnection({
                 displayEmployees();
             case "Hit me with Everything":
                 displayAll();
-            default :
+            case "Go Back":
+                getAction();
+             default :
                 viewData();
         }
      })
@@ -96,7 +106,7 @@ function displayAll(){
     connection.query(query, (err,res) => {
         if (err) throw err;
         console.table(res);
-        let query = "SELECT * FROM role";
+         let query = "SELECT * FROM role";
         connection.query(query, (err,res) => {
             if (err) throw err;
             console.table(res);
@@ -110,8 +120,50 @@ function displayAll(){
     });
 }
 
-  connection.connect(function(err) {
-    if (err) throw err;
-    console.log("connected as id " + connection.threadId);
-    getAction();
-  });
+function addData(){
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "add",
+                message: "Please select what you would like to add:",
+                choices:["Department", "Job Role", "Employee", "Go Back"]
+            }   
+        ]).then (answer => {
+           switch (answer.add) {
+               case "Department":
+                   addDept();
+               case "Job Role":
+                   addRole();
+               case "Employee":
+                   addEmployee();
+               case "Go Back":
+                    getAction();
+               default :
+                   addData();
+           }
+        })
+ }
+
+function addDept(){
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "deptName",
+            message: "What is the name of the department you would like to add?"
+        },
+        {
+            type: "input",
+            name: "deptCode",
+            message: "What is the ID for your new department?"
+        }
+    ]).then(answer => {
+        let deptName = answer.deptName.toLowerCase();
+        let query = `INSERT into department (id, name) values ('${answer.deptCode}','${deptName}')`;
+        connection.query(query, (err,res) => {
+            if (err) throw err;
+            console.log("That department has been added!")
+            displayDepts()
+        });
+    })
+}
+

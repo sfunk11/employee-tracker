@@ -157,8 +157,9 @@ function addDept(){
             message: "What is the ID for your new department?"
         }
     ]).then(answer => {
-        let deptName = answer.deptName.toLowerCase();
-        let query = `INSERT into department (id, name) values ('${answer.deptCode}','${deptName}')`;
+        let deptName = answer.deptName.trim().toLowerCase();
+        let deptCode = answer.deptCode.trim().toUpperCase();
+        let query = `INSERT into department (id, name) values ('${deptCode}','${deptName}')`;
         connection.query(query, (err,res) => {
             if (err) throw err;
             console.log("That department has been added!")
@@ -167,3 +168,32 @@ function addDept(){
     })
 }
 
+function addRole(){
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "title",
+            message: "What is the title for the role you want to add?"
+        },
+        {
+            type: "input",
+            name: "salary",
+            message: "What is the base salary for your new role?"
+        },
+        {
+            type: 'input',
+            name: "deptCode",
+            message: "What department is this role in? Please enter the dept ID."
+        }
+    ]).then(answer => {
+        let title = answer.title.trim();
+        let deptCode = answer.deptCode.trim().toUpperCase();
+        let salary = Number(answer.salary);
+        let query = `INSERT into role (title,salary,department_id) values ('${title}',${salary},'${deptCode}')`;
+        connection.query(query, (err,res) => {
+            if (err) throw err;
+            console.log("That job has been added!");
+            displayRoles();
+        });
+    })
+}

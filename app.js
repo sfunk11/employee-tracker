@@ -4,7 +4,6 @@ const mysql = require("mysql");
 const ctable = require("console.table")
 
 const fs = require('fs');
-const { start } = require("repl");
 
 const app = express();
 
@@ -63,16 +62,22 @@ const connection = mysql.createConnection({
         switch (answer.view) {
             case "Departments":
                 displayDepts();
+                break;
             case "Job Roles":
                 displayRoles();
+                break;
             case "Employees":
                 displayEmployees();
+                break;
             case "Hit me with Everything":
                 displayAll();
+                break;
             case "Go Back":
                 getAction();
+                break;
              default :
                 viewData();
+                break;
         }
      })
  }
@@ -132,14 +137,19 @@ function addData(){
            switch (answer.add) {
                case "Department":
                    addDept();
+                   break;
                case "Job Role":
                    addRole();
+                   break;
                case "Employee":
                    addEmployee();
+                   break;
                case "Go Back":
                     getAction();
+                    break;
                default :
                    addData();
+                   break;
            }
         })
  }
@@ -159,8 +169,9 @@ function addDept(){
     ]).then(answer => {
         let deptName = answer.deptName.trim().toLowerCase();
         let deptCode = answer.deptCode.trim().toUpperCase();
-        let query = `INSERT into department (id, name) values ('${deptCode}','${deptName}')`;
-        connection.query(query, (err,res) => {
+        let query = fs.readFileSync("./sql/add.sql", "utf8");
+        connection.query(query, [ `department (id, name)`,`("${deptCode}","${deptName}")`, "department"],
+            (err,res) => {
             if (err) throw err;
             console.log("That department has been added!")
             displayDepts()

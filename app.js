@@ -2,31 +2,53 @@ const express = require("express");
 const inquirer = require("inquirer");
 const mysql = require("mysql");
 const ctable = require("console.table")
-
+const promisemysql = require("promise-mysql");
 const fs = require('fs');
 
-const app = express();
-
-const connection = mysql.createConnection({
+const connectionProperties = {
     host: "localhost",
-  
-    // Your port; if not 3306
     port: 3306,
-  
-    // Your username
     user: "sam",
-  
-    // Your password
     password: "Dubhghall1!",
     database: "company_db"
-  });
+}
+const app = express();
+
+const connection = mysql.createConnection(connectionProperties);
 
   connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
+    console.log("\n Welcome to Employee Manager");
     getAction();
   });
 
+  // helper function to list Job Roles 
+  
+function getRoles() {
+   let roleArr = [];
+    connection.query("SELECT * FROM role", function(err, res) {
+    if (err) throw err;
+    for (var i = 0; i < res.length; i++) {
+      roleArr.push(res[i].title);
+    }
+  })
+  return roleArr;
+}
+
+// Helper function to list Managers
+var managersArr = [];
+function getManagers() {
+  connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL", function(err, res) {
+    if (err) throw err
+    for (var i = 0; i < res.length; i++) {
+      managersArr.push(res[i].first_name);
+    }
+
+  })
+  return managersArr;
+}
+// Main Action menu, leads to various submenus
   function getAction(){
     inquirer.prompt([
         {
@@ -50,27 +72,28 @@ const connection = mysql.createConnection({
         };
     });
 }
+// Submenu for choosing which Data to look at.
  function viewData() {
      inquirer.prompt([
          {
              type: "list",
              name: "view",
-             message: "Please select what you would like to view:",
-             choices:["Departments", "Job Roles", "Employees", "Hit me with Everything"]
+             message: "Please select an option to view:",
+             choices:["All Employees", "Employees by Department", "All Job Roles", "Employees By Job Role", "Go Back"]
          }   
      ]).then (answer => {
         switch (answer.view) {
-            case "Departments":
+            case "Employees by Department":
                 displayDepts();
                 break;
-            case "Job Roles":
+            case "All Job Roles":
                 displayRoles();
                 break;
-            case "Employees":
+            case "All Employees":
                 displayEmployees();
                 break;
-            case "Hit me with Everything":
-                displayAll();
+            case "Employees By Job Role":
+                 displayEmpByRole();
                 break;
             case "Go Back":
                 getAction();
@@ -82,46 +105,87 @@ const connection = mysql.createConnection({
      })
  }
 
-function displayDepts() {
-    let query = "SELECT * FROM department";
+// View all Employee information
+ function displayEmployees() {
+    let query = fs.readFileSync("./sql/allEmployeesData.sql", "utf8");
     connection.query(query, (err,res) => {
         if (err) throw err;
         console.table(res);
         getAction();
+    });
+}
+
+// View Employees by Department
+function displayDepts() {
+    let deptArray = [];
+    promisemysql.createConnection(connectionProperties)
+    .then((connection)=>{
+        return connection.query ('SELECT name FROM department');
+    }).then (data => {
+        for (i = 0; i <data.length; i++){
+            deptArray.push(data[i].name);
+        }
+    }).then (() => {
+         // Prompt user to select department from array of departments
+         inquirer.prompt({
+            name: "department",
+            type: "rawlist",
+            message: "Which department would you like to search?",
+            choices: deptArray
+        })    
+        .then((answer) => {
+
+            // Query all employees depending on selected department
+            let query = fs.readFileSync("sql/employeesByDept.sql", "utf8");
+            connection.query(query,[`${answer.department}`], (err, res) => {
+                if(err) return err;
+                
+                console.log("\n");
+                console.table(res);
+                getAction();
+            });
+        });       
     });
 }
 function displayRoles() {
-    let query = "SELECT * FROM role";
+    let query = fs.readFileSync("sql/allJobRoles.sql", "utf8");
     connection.query(query, (err,res) => {
         if (err) throw err;
         console.table(res);
         getAction();
     });
 }
-function displayEmployees() {
-    let query = "SELECT * FROM employee";
-    connection.query(query, (err,res) => {
-        if (err) throw err;
-        console.table(res);
-        getAction();
-    });
-}
-function displayAll(){
-    let query = "SELECT * FROM department";
-    connection.query(query, (err,res) => {
-        if (err) throw err;
-        console.table(res);
-         let query = "SELECT * FROM role";
-        connection.query(query, (err,res) => {
-            if (err) throw err;
-            console.table(res);
-            let query = "SELECT * FROM employee";
-            connection.query(query, (err,res) => {
-                if (err) throw err;
-                 console.table(res);
-                 getAction();
-              });
-        });
+// View Employees in a specific role
+function displayEmpByRole() {
+    let roleArray = [];
+    promisemysql.createConnection(connectionProperties)
+    .then((connection)=>{
+        return connection.query ('SELECT title FROM role');
+    }).then (data => {
+        for (i = 0; i <data.length; i++){
+            roleArray.push(data[i].title);
+        }
+        console.log(roleArray)
+    }).then (() => {
+         // Prompt user to select department from array of departments
+         inquirer.prompt({
+            name: "title",
+            type: "rawlist",
+            message: "Which job would you like to search?",
+            choices: roleArray
+        })    
+        .then((answer) => {
+
+            // Query all employees depending on selected department
+            let query = fs.readFileSync("sql/employeesByRole.sql", "utf8");
+            connection.query(query,[`${answer.title}`], (err, res) => {
+                if(err) return err;
+                
+                console.log("\n");
+                console.table(res);
+                getAction();
+            });
+        });       
     });
 }
 
@@ -238,3 +302,90 @@ function addEmployee(){
         });
     })
 }
+
+function changeData() {
+    
+    inquirer.prompt([
+        {
+            type: "list",
+            name: "change",
+            message: "Please select what you would like to change:",
+            choices:["Job Role", "Employee", "Go Back"]
+        }   
+    ]).then (answer => {
+       switch (answer.change) {
+           
+           case "Job Role":
+               changeRoles();
+               break;
+           case "Employee":
+               changeEmployee();
+               break;
+           case "Go Back":
+               getAction();
+               break;
+            default :
+               changeData();
+               break;
+       }
+    })
+}
+
+function changeRoles() {
+    roleArr = getRoles();
+    console.log(roleArr);
+    inquirer.prompt([
+        {
+            type: "rawlist",
+            name: "title",
+            message: "Which job role do you want to change?",
+            choices: roleArr
+        },       
+        {
+            type: "list",
+            name: "roleChange",
+            message: "Please select what you would like to change:",
+            choices:["Job Title", "Salary", "Department", "Go Back"]
+        }   
+    ]).then (answer => {
+       switch (answer.roleChange) {
+           
+           case "Job Title":
+               updateTitle(answer.title);
+               break;
+           case "Salary":
+               updateSalary(answer.title);
+               break;
+            case "Department":
+                updateDept(answer.title);
+                break;    
+           case "Go Back":
+               changeData(answer.title);
+               break;
+            default :
+               changeRoles(answer.title);
+               break;
+       }
+    })
+}
+function updateTitle(title){
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "newTitle",
+            message: "What should the new job title be?"
+        }
+    ]).then( answer => {
+        query = "UPDATE role Set ? where ?";
+        connection.query(query, [{
+            title: answer.newTitle
+        },
+        {
+            title: title
+        }],
+            (err,res) => {
+            if (err) throw err;
+            console.log("That job title has been changed.")
+
+    })
+})};

@@ -24,7 +24,7 @@ const connection = mysql.createConnection(connectionProperties);
   });
 
 // Main Action menu, leads to various submenus
-  function getAction(){
+ getAction = () => {
     inquirer.prompt([
         {
             type: "list",
@@ -52,7 +52,7 @@ const connection = mysql.createConnection(connectionProperties);
     });
 }
 // Submenu for choosing which Data to look at.
- function viewData() {
+ viewData = () => {
      inquirer.prompt([
          {
              type: "list",
@@ -99,8 +99,8 @@ displayEmployees = () => {
 
 }
 
-// View Employees by Department
-function displayDepts() {
+// Search Employees by Department
+displayDepts = () => {
     let deptArray = [];
     promisemysql.createConnection(connectionProperties)
     .then((connection)=>{
@@ -132,7 +132,8 @@ function displayDepts() {
     });
 }
 
-function displayManagers() {
+// Search Employees by Manager
+displayManagers = () => {
     let managerArray = [];
     let managerQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
 
@@ -179,7 +180,8 @@ function displayManagers() {
     });
 }
 
-function displayRoles() {
+// Display all Job Roles
+displayRoles = () => {
     let query = fs.readFileSync("sql/allJobRoles.sql", "utf8");
     connection.query(query, (err,res) => {
         if (err) throw err;
@@ -188,7 +190,7 @@ function displayRoles() {
     });
 }
 // View Employees in a specific role
-function displayEmpByRole() {
+displayEmpByRole = () => {
     let roleArray = [];
     promisemysql.createConnection(connectionProperties)
     .then((connection)=>{
@@ -220,7 +222,8 @@ function displayEmpByRole() {
     });
 }
 
-function addData(){
+// Add data submenu options
+addData = () => {
         inquirer.prompt([
             {
                 type: "list",
@@ -249,7 +252,8 @@ function addData(){
         })
  }
 
-function addDept(){
+//  add new department
+addDept = () => {
     inquirer.prompt([
         {
             type: "input",
@@ -273,7 +277,8 @@ function addDept(){
     })
 }
 
-function addRole(){
+// Add new job role
+addRole = () => {
     let deptArray = [];
     promisemysql.createConnection(connectionProperties)
     .then((connection)=>{
@@ -309,11 +314,13 @@ function addRole(){
             if (err) throw err;
             console.log("\n That job has been added. \n");
             getAction();
-        });
+         });
+      })
     })
-})};
+};
 
-function addEmployee(){
+// Add new employees
+addEmployee = () => {
 
     // Create two global array to hold 
     let roleArray = [];
@@ -426,7 +433,8 @@ function addEmployee(){
     });
 }
 
-function changeData() {
+// Change Data Submenu
+changeData = () => {
     
     inquirer.prompt([
         {
@@ -454,7 +462,8 @@ function changeData() {
     })
 }
 
-function changeRoles() {
+// Change Job Role submenu
+changeRoles = () => {
     let roleArray = [];
     promisemysql.createConnection(connectionProperties)
     .then((connection)=>{
@@ -497,8 +506,11 @@ function changeRoles() {
                break;
        }
     })
-    })};
-function updateTitle(title){
+    })
+};
+
+// Function to change job title
+updateTitle = (title) => {
     inquirer.prompt([
         {
             type: "input",
@@ -518,9 +530,10 @@ function updateTitle(title){
             console.log("\n That job title has been changed. \n")
              changeData();   
     })
-})};
+})
+};
 
-function updateSalary(title){
+updateSalary = (title) => {
     inquirer.prompt([
         {
             type: "input",
@@ -540,8 +553,10 @@ function updateSalary(title){
             console.log("That salary has been changed.")
             changeData();
     })
-})};
-function updateDept(title){
+})
+};
+
+ updateDept = (title) => {
     let deptArray = [];
     promisemysql.createConnection(connectionProperties)
     .then((connection)=>{
@@ -572,8 +587,10 @@ function updateDept(title){
                 changeData();
         })
     }); 
- })};
- function changeEmployee() {
+ })
+};
+
+changeEmployee = () => {
     let employeeArray = [];
     let employeeQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
     promisemysql.createConnection(connectionProperties)
@@ -625,8 +642,10 @@ function updateDept(title){
                break;
        }
     })
- })};
-function updateEverything(employeeID){
+ })
+};
+
+updateEverything = (employeeID) => {
         // Create two global array to hold 
         let roleArray = [];
         let managerArray = [];
@@ -710,8 +729,9 @@ function updateEverything(employeeID){
                     });
                 });
         });
-    }
-function updateRole(employeeID){
+}
+
+updateRole = (employeeID) => {
 
         let roleArray = [];
         let roleQuery = fs.readFileSync("sql/allJobRoles.sql", "utf8");
@@ -757,8 +777,9 @@ function updateRole(employeeID){
                     });
                 });
         });
-    }
-function updateManager(employeeID){
+}
+
+updateManager = (employeeID) => {
         let managerArray = [];
         let managerQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
     
@@ -811,8 +832,9 @@ function updateManager(employeeID){
                     });
                 });
         });
-    }  
-function deleteData(){
+} 
+
+deleteData = () => {
     inquirer.prompt([
         {
             type: "list",
@@ -840,7 +862,7 @@ function deleteData(){
        }
     })
 }
-function deleteDept(){
+deleteDept = () => {
     let deptArray = [];
     
     promisemysql.createConnection(connectionProperties
@@ -900,9 +922,9 @@ function deleteDept(){
                   
               });
           }) 
-  }
+}
 
-  function deleteRole(){
+deleteRole = () => {
     let roleArray = [];
     
     promisemysql.createConnection(connectionProperties
@@ -945,7 +967,7 @@ function deleteDept(){
                       connection.query(`DELETE FROM role WHERE ?;`,[{id: roleID
                       }], (err, res) => {
                           if(err) return err;
-                          // confirm department has been deleted
+                          // confirm job has been deleted
                           console.log(`\n '${answer.role}' DELETED.\n `);
   
                           getAction();
@@ -953,7 +975,7 @@ function deleteDept(){
                   } 
                   else {
   
-                      // do not delete department if not confirmed and go back to main menu
+                      // do not delete job role if not confirmed and go back to main menu
                       console.log(`\n  '${answer.role}' WAS NOT DELETED...\n `);
   
                       //back to main menu
@@ -962,19 +984,19 @@ function deleteDept(){
                   
               });
           }) 
-  }
+}
 
-  function deleteEmployee(){
+deleteEmployee = () => {
     let employeeArray = [];
     
     promisemysql.createConnection(connectionProperties
         ).then((connection) => {
     
-            // query all roles
+            // query all employees
             return connection.query(managerQuery);
         }).then((data) => {
     
-            // add all roles to array
+            // add all employees to array
             for (i=0; i < data.length; i++){
                 employeeArray.push(roles[i].Employee);
             }
@@ -995,7 +1017,7 @@ function deleteDept(){
   
                   if(answer.confirm === "YES"){
   
-                      // if confirmed, get role id
+                      // if confirmed, get employee id
                       let employeeID;
                       for (i=0; i < data.length; i++){
                           if (answer.employee === data[i].Employee){
@@ -1003,11 +1025,11 @@ function deleteDept(){
                           }
                       }
                       
-                      // delete job role
+                      // delete employee
                       connection.query(`DELETE FROM employee WHERE ?;`,[{id: employeeID
                       }], (err, res) => {
                           if(err) return err;
-                          // confirm department has been deleted
+                          // confirm employee has been deleted
                           console.log(`\n '${answer.employee}' DELETED.\n `);
   
                           getAction();
@@ -1015,13 +1037,12 @@ function deleteDept(){
                   } 
                   else {
   
-                      // do not delete department if not confirmed and go back to main menu
+                      // do not delete employee if not confirmed and go back to main menu
                       console.log(`\n  '${answer.employee}' WAS NOT DELETED...\n `);
   
                       //back to main menu
                       getAction();
                   }
-                  
               });
           }) 
-  }
+}

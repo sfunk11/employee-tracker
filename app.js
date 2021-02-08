@@ -4,7 +4,7 @@ const mysql = require("mysql");
 const ctable = require("console.table")
 const promisemysql = require("promise-mysql");
 const fs = require('fs');
-
+// const display = require("./lib/display.js");
 const connectionProperties = {
     host: "localhost",
     port: 3306,
@@ -19,35 +19,10 @@ const connection = mysql.createConnection(connectionProperties);
   connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
-    console.log("\n Welcome to Employee Manager");
+    console.log("\n Welcome to the Employee Manager");
     getAction();
   });
 
-  // helper function to list Job Roles 
-  
-function getRoles() {
-   let roleArr = [];
-    connection.query("SELECT * FROM role", function(err, res) {
-    if (err) throw err;
-    for (var i = 0; i < res.length; i++) {
-      roleArr.push(res[i].title);
-    }
-  })
-  return roleArr;
-}
-
-// Helper function to list Managers
-var managersArr = [];
-function getManagers() {
-  connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL", function(err, res) {
-    if (err) throw err
-    for (var i = 0; i < res.length; i++) {
-      managersArr.push(res[i].first_name);
-    }
-
-  })
-  return managersArr;
-}
 // Main Action menu, leads to various submenus
   function getAction(){
     inquirer.prompt([
@@ -102,17 +77,19 @@ function getManagers() {
                 viewData();
                 break;
         }
+        
      })
  }
 
-// View all Employee information
- function displayEmployees() {
+// // View all Employee information
+displayEmployees = () => {
     let query = fs.readFileSync("./sql/allEmployeesData.sql", "utf8");
     connection.query(query, (err,res) => {
         if (err) throw err;
         console.table(res);
         getAction();
     });
+
 }
 
 // View Employees by Department
@@ -233,17 +210,25 @@ function addDept(){
     ]).then(answer => {
         let deptName = answer.deptName.trim().toLowerCase();
         let deptCode = answer.deptCode.trim().toUpperCase();
-        let query = fs.readFileSync("./sql/add.sql", "utf8");
-        connection.query(query, [ `department (id, name)`,`("${deptCode}","${deptName}")`, "department"],
-            (err,res) => {
+        let query = `INSERT into department (id, name) VALUES ("${deptCode}","${deptName}")`;
+        connection.query(query,(err,res) => {
             if (err) throw err;
             console.log("That department has been added!")
-            displayDepts()
+            getAction();
         });
     })
 }
 
 function addRole(){
+    let deptArray = [];
+    promisemysql.createConnection(connectionProperties)
+    .then((connection)=>{
+        return connection.query ('SELECT name FROM department');
+    }).then (data => {
+        for (i = 0; i <data.length; i++){
+            deptArray.push(data[i].name);
+        }
+    }).then (() => {
     inquirer.prompt([
         {
             type: "input",
@@ -256,9 +241,10 @@ function addRole(){
             message: "What is the base salary for your new role?"
         },
         {
-            type: 'input',
+            type: 'rawlist',
             name: "deptCode",
-            message: "What department is this role in? Please enter the dept ID."
+            message: "Which Department is this new job in?",
+            choices: deptArray
         }
     ]).then(answer => {
         let title = answer.title.trim();
@@ -268,39 +254,124 @@ function addRole(){
         connection.query(query, (err,res) => {
             if (err) throw err;
             console.log("That job has been added!");
-            displayRoles();
+            getAction();
         });
     })
-}
+})};
 
 function addEmployee(){
-    inquirer.prompt([
-        {
-            type: "input",
-            name: "firstName",
-            message: "Please enter the new employee's first name."
-        },
-        {
-            type: "input",
-            name: "lastName",
-            message: "Please enter the new employee's last name."
-        },
-        {
-            type: 'input',
-            name: "roleID",
-            message: "Please enter the role ID code for this new employee."
-        },
-    ]).then(answer => {
-        let firstName = answer.firstName.trim();
-        let lastName = answer.lastName.trim();
-        let roleID =parseInt(answer.roleID);
-        let query = `INSERT into employee (first_name,last_name,role_id) values ('${firstName}','${lastName}',${roleID})`;
-        connection.query(query, (err,res) => {
-            if (err) throw err;
-            console.log("That employee has been added!");
-            displayEmployees();  
-        });
-    })
+
+    // Create two global array to hold 
+    let roleArray = [];
+    let managerArray = [];
+    let roleQuery = fs.readFileSync("sql/allJobRoles.sql", "utf8");
+    let managerQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
+
+    // Create connection using promise-sql
+    promisemysql.createConnection(connectionProperties
+    ).then((connection) => {
+
+        // Query  all roles and all manager. Pass as a promise
+        return Promise.all([
+            
+            connection.query(roleQuery), 
+            connection.query(managerQuery)
+        ]);
+    }).then(([roles, managers]) => {
+
+        // Place all roles in array
+        for (i=0; i < roles.length; i++){
+            roleArray.push(roles[i].title);
+        }
+
+        // place all managers in array
+        for (i=0; i < managers.length; i++){
+            managerArray.push(managers[i].Employee);
+        }
+
+        return Promise.all([roles, managers]);
+    }).then(([roles, managers]) => {
+
+        // add option for no manager
+        managerArray.unshift('--');
+        
+        inquirer.prompt([
+            {
+                // Prompt user of their first name
+                name: "firstName",
+                type: "input",
+                message: "First name: ",
+                // Validate field is not blank
+                validate: function(input){
+                    if (input === ""){
+                        console.log("**FIELD REQUIRED**");
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+            },
+            {
+                // Prompt user of their last name
+                name: "lastName",
+                type: "input",
+                message: "Last name: ",
+                // Validate field is not blank
+                validate: function(input){
+                    if (input === ""){
+                        console.log("**FIELD REQUIRED**");
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+            },
+            {
+                // Prompt user of their role
+                name: "role",
+                type: "rawlist",
+                message: "What is their role?",
+                choices: roleArray
+            },{
+                // Prompt user for manager
+                name: "manager",
+                type: "rawlist",
+                message: "Who is their manager?",
+                choices: managerArray
+            }]).then((answer) => {
+                // Set variable for IDs
+                console.log(roles,managers);
+                let roleID;
+                // Default Manager value as null
+                let managerID = null;
+
+                // Get ID of role selected
+                for (i=0; i < roles.length; i++){
+                    if (answer.role === roles[i].title){
+                        roleID = roles[i].id;
+                    }
+                }
+console.log(roleID)
+                // get ID of manager selected
+                for (i=0; i < managers.length; i++){
+                    if (answer.manager === managers[i].Employee){
+                        managerID = managers[i].id;
+                    }
+                }
+console.log(managerID)
+                // Add employee
+                connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                VALUES ("${answer.firstName}", "${answer.lastName}", ${roleID}, ${managerID})`, (err, res) => {
+                    if(err) return err;
+                    console.log(res);
+                            // Confirm employee has been added
+                    console.log(`\n ${answer.firstName} ${answer.lastName} has been added.\n `);
+                    getAction();
+                });
+            });
+    });
 }
 
 function changeData() {

@@ -4,5 +4,5 @@ FROM
     role 
 INNER JOIN 
     department on department.id = role.department_id
-ORDER BY title ASC;    
+ORDER BY id ASC;    
  

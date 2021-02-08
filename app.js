@@ -41,6 +41,7 @@ const connection = mysql.createConnection(connectionProperties);
             changeData();  
         }else if (data.action ==="Exit"){
            connection.end(); 
+           process.exit();
        
         }else {
             start();
@@ -54,13 +55,16 @@ const connection = mysql.createConnection(connectionProperties);
              type: "list",
              name: "view",
              message: "Please select an option to view:",
-             choices:["All Employees", "Employees by Department", "All Job Roles", "Employees By Job Role", "Go Back"]
+             choices:["All Employees", "Employees by Manager", "Employees by Department", "All Job Roles", "Employees By Job Role", "Go Back"]
          }   
      ]).then (answer => {
         switch (answer.view) {
             case "Employees by Department":
                 displayDepts();
                 break;
+            case "Employees by Manager":
+                displayManagers();
+                break;    
             case "All Job Roles":
                 displayRoles();
                 break;
@@ -124,6 +128,54 @@ function displayDepts() {
         });       
     });
 }
+
+function displayManagers() {
+    let managerArray = [];
+    let managerQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
+
+    // Create connection using promise-sql
+    promisemysql.createConnection(connectionProperties)
+    .then((connection) => {
+        return connection.query(managerQuery)
+    }).then(managers => {
+
+        // place all managers in array
+        for (i=0; i < managers.length; i++){
+            managerArray.push(managers[i].Employee);
+        }
+    }).then(() => {
+
+        // add option for no manager
+        managerArray.unshift('--');
+        
+        inquirer.prompt([
+            {
+                // Prompt user for manager
+                name: "manager",
+                type: "rawlist",
+                message: "Whose team would you like to view?",
+                choices: managerArray
+            }
+        ]).then((answer) => {
+            let managerID = null;
+            for (i=0; i < managerArray.length; i++){
+                if (answer.manager === managerArray[i]){
+                    managerID = i;
+                }
+            }
+            // Query all employees reporting to a specific manager
+            let query = fs.readFileSync("sql/employeesByManager.sql", "utf8");
+            connection.query(query, managerID, (err, res) => {
+                if(err) return err;
+                
+                console.log("\n");
+                console.table(res);
+                getAction();
+            });
+        });       
+    });
+}
+
 function displayRoles() {
     let query = fs.readFileSync("sql/allJobRoles.sql", "utf8");
     connection.query(query, (err,res) => {
@@ -673,8 +725,8 @@ function updateEverything(employeeID){
             for (i=0; i < roles.length; i++){
                 roleArray.push(roles[i].title);
             }
-        }).then(() => {
-    
+            return roles;
+        }).then((roles) => {
             inquirer.prompt([
                 {
                     // Prompt user of their role
@@ -684,15 +736,8 @@ function updateEverything(employeeID){
                     choices: roleArray
                 }
             ]).then((answer) => {
-                    // Set variable for IDs
-                    let roleID;
+                let roleID = roleArray.indexOf(answer.role) + 1;
                     
-                    // Get ID of role selected
-                    for (i=0; i < roles.length; i++){
-                        if (answer.role === roles[i].title){
-                            roleID = roles[i].id;
-                        }
-                    }
                     // Update Employee
                     connection.query( "UPDATE employee Set ? where ?", [
                         {
@@ -742,9 +787,9 @@ function updateEverything(employeeID){
                     let managerID = null;
 
                     // get ID of manager selected
-                    for (i=0; i < managers.length; i++){
-                        if (answer.manager === managers[i].Employee){
-                            managerID = managers[i].id;
+                    for (i=0; i < managerArray.length; i++){
+                        if (answer.manager === managerArray[i]){
+                            managerID = i;
                         }
                     }
                     // Update employee record

@@ -142,7 +142,6 @@ function displayEmpByRole() {
         for (i = 0; i <data.length; i++){
             roleArray.push(data[i].title);
         }
-        console.log(roleArray)
     }).then (() => {
          // Prompt user to select department from array of departments
          inquirer.prompt({
@@ -342,7 +341,6 @@ function addEmployee(){
                 choices: managerArray
             }]).then((answer) => {
                 // Set variable for IDs
-                console.log(roles,managers);
                 let roleID;
                 // Default Manager value as null
                 let managerID = null;
@@ -353,14 +351,13 @@ function addEmployee(){
                         roleID = roles[i].id;
                     }
                 }
-console.log(roleID)
+
                 // get ID of manager selected
                 for (i=0; i < managers.length; i++){
                     if (answer.manager === managers[i].Employee){
                         managerID = managers[i].id;
                     }
                 }
-console.log(managerID)
                 // Add employee
                 connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
                 VALUES ("${answer.firstName}", "${answer.lastName}", ${roleID}, ${managerID})`, (err, res) => {
@@ -403,14 +400,21 @@ function changeData() {
 }
 
 function changeRoles() {
-    roleArr = getRoles();
-    console.log(roleArr);
+    let roleArray = [];
+    promisemysql.createConnection(connectionProperties)
+    .then((connection)=>{
+        return connection.query ('SELECT title FROM role');
+    }).then (data => {
+        for (i = 0; i <data.length; i++){
+            roleArray.push(data[i].title);
+        }
+    }).then (() => {
     inquirer.prompt([
         {
             type: "rawlist",
             name: "title",
             message: "Which job role do you want to change?",
-            choices: roleArr
+            choices: roleArray
         },       
         {
             type: "list",
@@ -438,7 +442,7 @@ function changeRoles() {
                break;
        }
     })
-}
+    })};
 function updateTitle(title){
     inquirer.prompt([
         {
@@ -457,6 +461,60 @@ function updateTitle(title){
             (err,res) => {
             if (err) throw err;
             console.log("That job title has been changed.")
-
+             changeData();   
     })
 })};
+
+function updateSalary(title){
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "newSalary",
+            message: "What should the new salary be?"
+        }
+    ]).then( answer => {
+        query = "UPDATE role Set ? where ?";
+        connection.query(query, [{
+            salary: answer.newSalary
+        },
+        {
+            title: title
+        }],
+            (err,res) => {
+            if (err) throw err;
+            console.log("That salary has been changed.")
+            changeData();
+    })
+})};
+function updateDept(title){
+    let deptArray = [];
+    promisemysql.createConnection(connectionProperties)
+    .then((connection)=>{
+        return connection.query ('SELECT id FROM department');
+    }).then (data => {
+        for (i = 0; i <data.length; i++){
+            deptArray.push(data[i].id);
+        }
+    }).then (() => {
+        inquirer.prompt([
+            {
+                type: "rawlist",
+                name: "newDept",
+                message: "Which department has this job moved to?",
+                choices: deptArray
+            }
+        ]).then( answer => {
+            query = "UPDATE role Set ? where ?";
+            connection.query(query, [{
+                department_id: answer.newDept
+            },
+            {
+                title: title
+            }],
+                (err,res) => {
+                if (err) throw err;
+                console.log("That job has been moved.")
+                changeData();
+        })
+    }); 
+ })};

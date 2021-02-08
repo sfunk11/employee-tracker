@@ -30,7 +30,8 @@ const connection = mysql.createConnection(connectionProperties);
             type: "list",
             name: "action",
             message: "What would you like to do?",
-            choices: ["View Information", "Add New Information", "Update Existing Information","Exit"]
+            choices: ["View Information", "Add New Information", "Update Existing Information","Delete a Record",
+            "Exit"]
         }
     ]).then(data => {
         if(data.action === "View Information"){
@@ -38,7 +39,9 @@ const connection = mysql.createConnection(connectionProperties);
         }else if (data.action ==="Add New Information"){
             addData();
         }else if (data.action ==="Update Existing Information"){
-            changeData();  
+            changeData(); 
+        } else if(data.action ==="Delete a Record") { 
+            deleteData();
         }else if (data.action ==="Exit"){
            connection.end(); 
            process.exit();
@@ -708,8 +711,8 @@ function updateEverything(employeeID){
                 });
         });
     }
-    function updateRole(employeeID){
-        // Create two global array to hold 
+function updateRole(employeeID){
+
         let roleArray = [];
         let roleQuery = fs.readFileSync("sql/allJobRoles.sql", "utf8");
         
@@ -755,7 +758,7 @@ function updateEverything(employeeID){
                 });
         });
     }
-    function updateManager(employeeID){
+function updateManager(employeeID){
         let managerArray = [];
         let managerQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
     
@@ -808,4 +811,217 @@ function updateEverything(employeeID){
                     });
                 });
         });
-    }    
+    }  
+function deleteData(){
+    inquirer.prompt([
+        {
+            type: "list",
+            name: "add",
+            message: "Please select what you would like to delete:",
+            choices:["Department", "Job Role", "Employee", "Go Back"]
+        }   
+    ]).then (answer => {
+       switch (answer.add) {
+           case "Department":
+               deleteDept();
+               break;
+           case "Job Role":
+               deleteRole();
+               break;
+           case "Employee":
+               deleteEmployee();
+               break;
+           case "Go Back":
+                getAction();
+                break;
+           default :
+               deleteData();
+               break;
+       }
+    })
+}
+function deleteDept(){
+    let deptArray = [];
+    
+    promisemysql.createConnection(connectionProperties
+        ).then((connection) => {
+    
+            // query all departments
+            return connection.query("SELECT id, name FROM department");
+        }).then((depts) => {
+    
+            // add all departments to array
+            for (i=0; i < depts.length; i++){
+                deptArray.push(depts[i].name);
+            }
+    
+            inquirer.prompt([{
+                  type: "list",
+                  name: "dept",
+                  message: "Which department would you like to delete?",
+                  choices: deptArray
+              }, 
+              {
+                  type: "list",
+                  name: "confirm",
+                  message: "Please confirm that you want to delete this department?",
+                  choices: ["YES", "NO"]
+  
+              }]).then((answer) => {
+  
+                  if(answer.confirm === "YES"){
+  
+                      // if confirmed, get department id
+                      let deptID;
+                      for (i=0; i < depts.length; i++){
+                          if (answer.dept == depts[i].name){
+                              deptID = depts[i].id;
+                          }
+                      }
+                      
+                      // delete department
+                      connection.query(`DELETE FROM department WHERE ?;`,[{id: deptID
+                      }], (err, res) => {
+                          if(err) return err;
+                          // confirm department has been deleted
+                          console.log(`\n '${answer.dept}' DELETED.\n `);
+  
+                          getAction();
+                      });
+                  } 
+                  else {
+  
+                      // do not delete department if not confirmed and go back to main menu
+                      console.log(`\n  '${answer.dept}' WAS NOT DELETED...\n `);
+  
+                      //back to main menu
+                      getAction();
+                  }
+                  
+              });
+          }) 
+  }
+
+  function deleteRole(){
+    let roleArray = [];
+    
+    promisemysql.createConnection(connectionProperties
+        ).then((connection) => {
+    
+            // query all roles
+            return connection.query("SELECT id, title FROM role");
+        }).then((roles) => {
+    
+            // add all roles to array
+            for (i=0; i < roles.length; i++){
+                roleArray.push(roles[i].title);
+            }
+    
+            inquirer.prompt([{
+                  type: "list",
+                  name: "role",
+                  message: "Which position would you like to delete?",
+                  choices: roleArray
+              }, 
+              {
+                  type: "list",
+                  name: "confirm",
+                  message: "Please confirm that you want to delete this job?",
+                  choices: ["YES", "NO"]
+  
+              }]).then((answer) => {
+  
+                  if(answer.confirm === "YES"){
+  
+                      // if confirmed, get role id
+                      let roleID;
+                      for (i=0; i < roles.length; i++){
+                          if (answer.role == roles[i].title){
+                              roleID = roles[i].id;
+                          }
+                      }
+                      
+                      // delete job role
+                      connection.query(`DELETE FROM role WHERE ?;`,[{id: roleID
+                      }], (err, res) => {
+                          if(err) return err;
+                          // confirm department has been deleted
+                          console.log(`\n '${answer.role}' DELETED.\n `);
+  
+                          getAction();
+                      });
+                  } 
+                  else {
+  
+                      // do not delete department if not confirmed and go back to main menu
+                      console.log(`\n  '${answer.role}' WAS NOT DELETED...\n `);
+  
+                      //back to main menu
+                      getAction();
+                  }
+                  
+              });
+          }) 
+  }
+
+  function deleteEmployee(){
+    let employeeArray = [];
+    
+    promisemysql.createConnection(connectionProperties
+        ).then((connection) => {
+    
+            // query all roles
+            return connection.query(managerQuery);
+        }).then((data) => {
+    
+            // add all roles to array
+            for (i=0; i < data.length; i++){
+                employeeArray.push(roles[i].Employee);
+            }
+    
+            inquirer.prompt([{
+                  type: "list",
+                  name: "employee",
+                  message: "Which employee would you like to delete?",
+                  choices: employeeArray
+              }, 
+              {
+                  type: "list",
+                  name: "confirm",
+                  message: "Please confirm that you want to delete this job?",
+                  choices: ["YES", "NO"]
+  
+              }]).then((answer) => {
+  
+                  if(answer.confirm === "YES"){
+  
+                      // if confirmed, get role id
+                      let employeeID;
+                      for (i=0; i < data.length; i++){
+                          if (answer.employee === data[i].Employee){
+                              employeeId = data[i].id;
+                          }
+                      }
+                      
+                      // delete job role
+                      connection.query(`DELETE FROM employee WHERE ?;`,[{id: employeeID
+                      }], (err, res) => {
+                          if(err) return err;
+                          // confirm department has been deleted
+                          console.log(`\n '${answer.employee}' DELETED.\n `);
+  
+                          getAction();
+                      });
+                  } 
+                  else {
+  
+                      // do not delete department if not confirmed and go back to main menu
+                      console.log(`\n  '${answer.employee}' WAS NOT DELETED...\n `);
+  
+                      //back to main menu
+                      getAction();
+                  }
+                  
+              });
+          }) 
+  }

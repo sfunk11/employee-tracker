@@ -58,19 +58,25 @@ const connection = mysql.createConnection(connectionProperties);
              type: "list",
              name: "view",
              message: "Please select an option to view:",
-             choices:["All Employees", "Employees by Manager", "Employees by Department", "All Job Roles", "Employees By Job Role", "Go Back"]
+             choices:["All Employees", "Employees by Manager", "All Departments", "Employees by Department", "Department Budgets", "All Job Roles", "Employees By Job Role", "Go Back"]
          }   
      ]).then (answer => {
         switch (answer.view) {
             case "Employees by Department":
-                displayDepts();
+                displayEmpByDept();
                 break;
             case "Employees by Manager":
                 displayManagers();
                 break;    
+            case "All Departments":
+                displayDepts();
+                break;
+            case "Department Budgets":
+                displayBudgets();
+                break;
             case "All Job Roles":
                 displayRoles();
-                break;
+                break;   
             case "All Employees":
                 displayEmployees();
                 break;
@@ -100,7 +106,7 @@ displayEmployees = () => {
 }
 
 // Search Employees by Department
-displayDepts = () => {
+displayEmpByDept = () => {
     let deptArray = [];
     promisemysql.createConnection(connectionProperties)
     .then((connection)=>{
@@ -189,6 +195,54 @@ displayRoles = () => {
         getAction();
     });
 }
+
+// Display all Depts
+displayDepts = () => {
+    let query = fs.readFileSync("sql/deptQuery.sql", "utf8");
+    connection.query(query, (err,res) => {
+        if (err) throw err;
+        console.table(res);
+        getAction();
+    });
+}
+
+// Display department budgets
+displayBudgets = () => {
+    let deptQuery = fs.readFileSync("sql/deptQuery.sql", "utf8");
+    let salaryQuery = fs.readFileSync("sql/employeeSalaryQuery.sql", "utf8");
+    
+    promisemysql.createConnection(connectionProperties)
+    .then((connection) => {
+        return  Promise.all([
+
+            // query all departments and salaries
+            connection.query(salaryQuery),
+            connection.query(deptQuery)
+        ]);
+    }).then(([salaries, departments]) => {
+        let budgetArray = [];
+        let department;
+
+        for(i=0; i<departments.length; i++){
+            let budget = 0;
+
+            for(j=0; j<salaries.length; j++){
+                if (departments[i].name === salaries[j].department){
+                    budget += salaries[j].salary;
+                }
+            }
+            department = {
+                Department: departments[i].name,
+                Budget: budget
+            }
+            budgetArray.push(department);
+        }
+        console.table(budgetArray);
+        console.log ('\n');
+        getAction();
+    });    
+}
+
 // View Employees in a specific role
 displayEmpByRole = () => {
     let roleArray = [];
@@ -533,6 +587,7 @@ updateTitle = (title) => {
 })
 };
 
+// Function to change job salary
 updateSalary = (title) => {
     inquirer.prompt([
         {
@@ -556,6 +611,7 @@ updateSalary = (title) => {
 })
 };
 
+// function to change the job's dept
  updateDept = (title) => {
     let deptArray = [];
     promisemysql.createConnection(connectionProperties)
@@ -590,6 +646,7 @@ updateSalary = (title) => {
  })
 };
 
+// Submenu for updating employee information
 changeEmployee = () => {
     let employeeArray = [];
     let employeeQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
@@ -645,6 +702,7 @@ changeEmployee = () => {
  })
 };
 
+// Update both role and manager for employee
 updateEverything = (employeeID) => {
         // Create two global array to hold 
         let roleArray = [];
@@ -731,6 +789,7 @@ updateEverything = (employeeID) => {
         });
 }
 
+// update an employee's job role
 updateRole = (employeeID) => {
 
         let roleArray = [];
@@ -779,6 +838,7 @@ updateRole = (employeeID) => {
         });
 }
 
+// update an employee's manager
 updateManager = (employeeID) => {
         let managerArray = [];
         let managerQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
@@ -834,6 +894,7 @@ updateManager = (employeeID) => {
         });
 } 
 
+// Submenu for deleting information
 deleteData = () => {
     inquirer.prompt([
         {
@@ -862,6 +923,8 @@ deleteData = () => {
        }
     })
 }
+
+// Delete an entire dept
 deleteDept = () => {
     let deptArray = [];
     
@@ -924,6 +987,7 @@ deleteDept = () => {
           }) 
 }
 
+// delete a job role
 deleteRole = () => {
     let roleArray = [];
     
@@ -986,6 +1050,7 @@ deleteRole = () => {
           }) 
 }
 
+// Delete a single employee
 deleteEmployee = () => {
     let employeeArray = [];
     

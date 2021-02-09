@@ -263,7 +263,7 @@ displayBudgets = () => {
                 }
             }
             department = {
-                Department: salaries[j].Department,
+                Department: departments[i].name,
                 Budget: budget
             }
             budgetArray.push(department);
@@ -365,13 +365,15 @@ addDept = () => {
 // Add new job role
 addRole = () => {
     let deptArray = [];
+    let deptData =[];
     promisemysql.createConnection(connectionProperties)
     .then((connection)=>{
-        return connection.query ('SELECT name FROM department');
+        return connection.query ('SELECT * FROM department');
     }).then (data => {
         for (i = 0; i <data.length; i++){
             deptArray.push(data[i].name);
         }
+        deptData = data;
     }).then (() => {
     inquirer.prompt([
         {
@@ -392,8 +394,14 @@ addRole = () => {
         }
     ]).then(answer => {
         let title = answer.title.trim();
-        let deptCode = answer.deptCode.trim().toUpperCase();
+        let department = answer.deptCode.trim().toLowerCase();
+        let deptCode;
         let salary = Number(answer.salary);
+        for (i=0; i< deptData.length; i++){
+            if (department === deptData[i].name){
+                deptCode = deptData[i].id;
+            }
+        }
         let query = `INSERT into role (title,salary,department_id) values ('${title}',${salary},'${deptCode}')`;
         connection.query(query, (err,res) => {
             if (err) throw err;

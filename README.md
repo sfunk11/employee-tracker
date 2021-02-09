@@ -25,7 +25,11 @@
   [Link to Video Walkthrough](**)
   
   ### Screenshots
-  ![Screenshot](./public/assets/note-taker.png)
+  ![Start Menu](./images/start-menu.png)
+  ![View All Employees](./images/view-all-employees.png)
+  ![View Job Roles](./images/view-job-roles.png)
+  ![Add Dept](./images/add-dept.png)
+  ![Update Employee](./images/update-employee.png)
 
   ## Languages and Technologies Used
   * Javascript

@@ -22,7 +22,7 @@
   ## Usage
   To run the application, use the command "npm start" from your command line after installation.
 
-  [Link to Video Walkthrough](**)
+  [Link to Video Walkthrough](https://drive.google.com/file/d/1sH0dEEsO6tBQRt1OxENRPrujuvTrNo54/view?usp=sharing)
   
   ### Screenshots
   ![Start Menu](./images/start-menu.png)

@@ -562,7 +562,7 @@ changeRoles = () => {
         return connection.query ('SELECT title FROM role');
     }).then (data => {
         for (i = 0; i <data.length; i++){
-            roleArray.push(data[i].Title);
+            roleArray.push(data[i].title);
         }
     }).then (() => {
     inquirer.prompt([
@@ -1091,7 +1091,7 @@ deleteRole = () => {
 // Delete a single employee
 deleteEmployee = () => {
     let employeeArray = [];
-    
+    let managerQuery = fs.readFileSync("sql/managerQuery.sql", "utf8");
     promisemysql.createConnection(connectionProperties
         ).then((connection) => {
     

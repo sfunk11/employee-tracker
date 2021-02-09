@@ -1,5 +1,6 @@
 SELECT 
-    role.id, role.title, role.salary, department.name AS Department
+    role.id, role.title as Title, role.salary as Salary, 
+    department.name AS Department
 FROM 
     role 
 INNER JOIN 

@@ -1,7 +1,7 @@
 SELECT 
-e.id, e.first_name, e.last_name, role.title, 
-department.name AS department, role.salary, 
-concat(m.first_name, ' ' ,  m.last_name) AS manager
+e.id, e.first_name AS "First Name", e.last_name as "Last Name", role.title AS Title, 
+department.name AS Department, role.salary AS Salary, 
+concat(m.first_name, ' ' ,  m.last_name) AS Manager
 FROM 
     employee e
 LEFT JOIN 

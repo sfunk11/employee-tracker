@@ -258,12 +258,12 @@ displayBudgets = () => {
             let budget = 0;
 
             for(j=0; j<salaries.length; j++){
-                if (departments[i].name === salaries[j].department){
-                    budget += salaries[j].salary;
+                if (departments[i].name === salaries[j].Department){
+                    budget += salaries[j].Salary;
                 }
             }
             department = {
-                Department: departments[i].name,
+                Department: salaries[j].Department,
                 Budget: budget
             }
             budgetArray.push(department);
@@ -427,7 +427,7 @@ addEmployee = () => {
 
         // Place all roles in array
         for (i=0; i < roles.length; i++){
-            roleArray.push(roles[i].title);
+            roleArray.push(roles[i].Title);
         }
 
         // place all managers in array
@@ -494,7 +494,7 @@ addEmployee = () => {
 
                 // Get ID of role selected
                 for (i=0; i < roles.length; i++){
-                    if (answer.role === roles[i].title){
+                    if (answer.role === roles[i].Title){
                         roleID = roles[i].id;
                     }
                 }
@@ -509,7 +509,6 @@ addEmployee = () => {
                 connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
                 VALUES ("${answer.firstName}", "${answer.lastName}", ${roleID}, ${managerID})`, (err, res) => {
                     if(err) return err;
-                    console.log(res);
                             // Confirm employee has been added
                     console.log(`\n ${answer.firstName} ${answer.lastName} has been added.\n `);
                     getAction();
@@ -555,7 +554,7 @@ changeRoles = () => {
         return connection.query ('SELECT title FROM role');
     }).then (data => {
         for (i = 0; i <data.length; i++){
-            roleArray.push(data[i].title);
+            roleArray.push(data[i].Title);
         }
     }).then (() => {
     inquirer.prompt([
@@ -755,7 +754,7 @@ updateEverything = (employeeID) => {
     
             // Place all roles in array
             for (i=0; i < roles.length; i++){
-                roleArray.push(roles[i].title);
+                roleArray.push(roles[i].Title);
             }
     
             // place all managers in array
@@ -790,7 +789,7 @@ updateEverything = (employeeID) => {
     
                     // Get ID of role selected
                     for (i=0; i < roles.length; i++){
-                        if (answer.role === roles[i].title){
+                        if (answer.role === roles[i].Title){
                             roleID = roles[i].id;
                         }
                     }
@@ -836,7 +835,7 @@ updateRole = (employeeID) => {
     
             // Place all roles in array
             for (i=0; i < roles.length; i++){
-                roleArray.push(roles[i].title);
+                roleArray.push(roles[i].Title);
             }
             return roles;
         }).then((roles) => {

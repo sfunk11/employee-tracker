@@ -1,5 +1,5 @@
 SELECT 
-    department.name AS department, role.salary 
+    department.name AS Department, role.salary AS Salary
 FROM 
     employee e 
 LEFT JOIN 

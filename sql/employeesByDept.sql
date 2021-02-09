@@ -1,5 +1,5 @@
 SELECT 
-    e.id, e.first_name AS 'First Name', e.last_name AS 'Last Name', role.title AS Title, 
+    e.id, e.first_name AS "First Name", e.last_name AS 'Last Name', role.title AS Title, 
     department.name AS Department, role.salary AS Salary, concat(m.first_name, ' ' ,  m.last_name) AS Manager 
 FROM 
     employee e 
